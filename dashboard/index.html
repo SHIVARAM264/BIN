@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CleanCycle Dashboard</title>
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a7a4a 0%, #0e4d2f 100%);
+      padding: 22px 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    header .logo { font-size: 2.2rem; }
+    header h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: 1px; }
+    header p  { font-size: 0.85rem; opacity: 0.8; margin-top: 2px; }
+
+    /* ── Status Bar ── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 32px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      font-size: 0.85rem;
+    }
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #3fb950;
+      animation: pulse 1.5s infinite;
+    }
+    .dot.idle { background: #f0c040; animation: none; }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.4; transform:scale(1.3); }
+    }
+
+    /* ── Main Grid ── */
+    main {
+      max-width: 1100px;
+      margin: 32px auto;
+      padding: 0 24px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    /* ── Stat Card ── */
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 14px;
+      padding: 22px 24px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+    .card .icon {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+    .card .label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #8b949e;
+      margin-bottom: 6px;
+    }
+    .card .value {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #3fb950;
+      line-height: 1;
+    }
+    .card .unit {
+      font-size: 1rem;
+      color: #8b949e;
+      margin-left: 4px;
+    }
+    .card .sublabel {
+      font-size: 0.78rem;
+      color: #6e7681;
+      margin-top: 6px;
+    }
+    .card.accent { border-color: #1f6feb; }
+    .card.accent .value { color: #79c0ff; }
+    .card.warn   { border-color: #9e6a03; }
+    .card.warn   .value { color: #e3b341; }
+    .card.purple { border-color: #6e40c9; }
+    .card.purple .value { color: #bc8cff; }
+
+    /* ── Status Card ── */
+    .status-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .status-icon { font-size: 3rem; }
+    .status-text h2 { font-size: 1.2rem; margin-bottom: 4px; }
+    .status-text p  { font-size: 0.88rem; color: #8b949e; }
+    .badge {
+      margin-left: auto;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .badge.active { background: #0d4429; color: #3fb950; border: 1px solid #3fb950; }
+    .badge.idle   { background: #2d2116; color: #e3b341; border: 1px solid #e3b341; }
+
+    /* ── Log Table ── */
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #161b22;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #30363d;
+      margin-bottom: 28px;
+    }
+    .log-table th {
+      background: #1c2128;
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8b949e;
+      border-bottom: 1px solid #30363d;
+    }
+    .log-table td {
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      border-bottom: 1px solid #21262d;
+    }
+    .log-table tr:last-child td { border-bottom: none; }
+    .log-table tr:hover td { background: #1c2128; }
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .tag.pet  { background:#0d3d2e; color:#3fb950; }
+    .tag.hdpe { background:#1a2340; color:#79c0ff; }
+    .tag.pp   { background:#2b1b40; color:#bc8cff; }
+
+    /* ── Progress Bar ── */
+    .progress-wrap {
+      background: #21262d;
+      border-radius: 99px;
+      height: 8px;
+      width: 100%;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #1a7a4a, #3fb950);
+      transition: width 1s ease;
+    }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      background: #21262d;
+      color: #e6edf3;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s, border-color .15s;
+    }
+    button:hover { background: #2d333b; border-color: #8b949e; }
+    button.primary {
+      background: #1a7a4a;
+      border-color: #1a7a4a;
+      font-weight: 600;
+    }
+    button.primary:hover { background: #22a05a; }
+    button.danger { border-color: #da3633; color:#da3633; }
+    button.danger:hover { background: #2d1215; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 0.78rem;
+      color: #484f58;
+      border-top: 1px solid #21262d;
+    }
+
+    /* ── Notification Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #1a7a4a;
+      color: #fff;
+      padding: 14px 22px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,.5);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .3s, transform .3s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">♻️</div>
+  <div>
+    <h1>CleanCycle</h1>
+    <p>Smart Plastic Waste Collection System &nbsp;|&nbsp; Live Dashboard</p>
+  </div>
+</header>
+
+<!-- ── Status Bar ── -->
+<div class="status-bar">
+  <div class="dot" id="statusDot"></div>
+  <span id="statusText">System Online – Monitoring active</span>
+  <span style="margin-left:auto; color:#484f58;" id="clockSpan"></span>
+</div>
+
+<main>
+
+  <!-- ── Demo Control Buttons ── -->
+  <div class="btn-row">
+    <button class="primary" onclick="simulateDetection()">▶ Simulate Bottle Detection</button>
+    <button onclick="resetData()" class="danger">⟳ Reset Data</button>
+    <button onclick="exportLog()">⬇ Export Log (CSV)</button>
+  </div>
+
+  <!-- ── Collection Status Card ── -->
+  <div class="status-card" id="statusCard">
+    <div class="status-icon" id="statusIcon">🟡</div>
+    <div class="status-text">
+      <h2 id="statusHeading">Idle – Waiting for plastic item</h2>
+      <p id="statusDesc">Place a plastic bottle near the sensor opening to trigger collection.</p>
+    </div>
+    <div class="badge idle" id="statusBadge">IDLE</div>
+  </div>
+
+  <!-- ── KPI Cards ── -->
+  <div class="grid-4">
+    <div class="card">
+      <span class="icon">🍶</span>
+      <div class="label">Items Collected</div>
+      <div class="value" id="totalCount">0</div>
+      <div class="sublabel">plastic bottles / items</div>
+    </div>
+    <div class="card accent">
+      <span class="icon">⚖️</span>
+      <div class="label">Estimated Weight</div>
+      <div class="value" id="totalWeight">0</div><span class="unit">g</span>
+      <div class="sublabel">~25g per PET bottle</div>
+    </div>
+    <div class="card warn">
+      <span class="icon">🕐</span>
+      <div class="label">Latest Collection</div>
+      <div class="value" id="lastTime" style="font-size:1.3rem;">—</div>
+      <div class="sublabel" id="lastDate">No collection yet</div>
+    </div>
+    <div class="card purple">
+      <span class="icon">♻️</span>
+      <div class="label">Total Recyclable</div>
+      <div class="value" id="recyclableWeight">0</div><span class="unit">g</span>
+      <div class="sublabel">100% recyclable plastic</div>
+    </div>
+  </div>
+
+  <!-- ── Bin Fill Progress ── -->
+  <div class="card" style="margin-bottom:28px;">
+    <span class="icon">🗑️</span>
+    <div class="label">Bin Capacity</div>
+    <div style="display:flex; justify-content:space-between; margin-top:6px;">
+      <span id="binPct" style="font-weight:700; color:#3fb950;">0%</span>
+      <span style="color:#6e7681; font-size:0.82rem;">Max: 20 items</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- ── Collection Log ── -->
+  <div class="section-title">📋 Collection Log</div>
+  <table class="log-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Time</th>
+        <th>Distance Detected</th>
+        <th>Material Type</th>
+        <th>Weight (g)</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="logBody">
+      <tr>
+        <td colspan="6" style="text-align:center; color:#484f58; padding:28px;">
+          No collections yet. Simulate a detection above to begin.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</main>
+
+<footer>
+  CleanCycle v1.0 &nbsp;|&nbsp; College Project Demo &nbsp;|&nbsp;
+  Hardware: Arduino UNO + HC-SR04 + SG90 Servo
+</footer>
+
+<div id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let totalCount       = 0;
+const MAX_BIN        = 20;
+const WEIGHT_PER     = 25;   // grams per bottle
+const MATERIALS      = ['PET', 'HDPE', 'PP'];
+const MATERIAL_TAGS  = { PET:'pet', HDPE:'hdpe', PP:'pp' };
+let logEntries       = [];
+let collectionActive = false;
+let collectionTimer  = null;
+
+// ── Clock ──────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockSpan').textContent =
+    now.toLocaleDateString() + '  ' + now.toLocaleTimeString();
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Simulate Bottle Detection ──────────────────────────
+function simulateDetection() {
+  if (collectionActive) { showToast('⚠️ Collection already in progress!'); return; }
+
+  totalCount++;
+  const totalWeight      = totalCount * WEIGHT_PER;
+  const material         = MATERIALS[Math.floor(Math.random() * MATERIALS.length)];
+  const distance         = (Math.random() * 8 + 3).toFixed(1);  // 3–11 cm
+  const now              = new Date();
+  const timeStr          = now.toLocaleTimeString();
+  const dateStr          = now.toLocaleDateString();
+
+  // ── Update KPI cards ──
+  document.getElementById('totalCount').textContent    = totalCount;
+  document.getElementById('totalWeight').textContent   = totalWeight;
+  document.getElementById('recyclableWeight').textContent = totalWeight;
+  document.getElementById('lastTime').textContent      = timeStr;
+  document.getElementById('lastDate').textContent      = dateStr;
+
+  // ── Bin fill ──
+  const pct = Math.min(100, Math.round((totalCount / MAX_BIN) * 100));
+  document.getElementById('binPct').textContent       = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  // ── Status → ACTIVE ──
+  setStatus('active');
+
+  // ── Add log row ──
+  const entry = { id: totalCount, time: timeStr, distance, material, weight: WEIGHT_PER };
+  logEntries.unshift(entry);
+  renderLog();
+
+  // ── Return to IDLE after 3 s (mimics servo open→close) ──
+  collectionActive = true;
+  clearTimeout(collectionTimer);
+  collectionTimer = setTimeout(() => {
+    setStatus('idle');
+    collectionActive = false;
+    showToast('✅ Item #' + totalCount + ' collected successfully!');
+  }, 3000);
+
+  showToast('🍶 Bottle detected! Flap opening…');
+}
+
+// ── Status Helpers ─────────────────────────────────────
+function setStatus(mode) {
+  const dot     = document.getElementById('statusDot');
+  const text    = document.getElementById('statusText');
+  const heading = document.getElementById('statusHeading');
+  const desc    = document.getElementById('statusDesc');
+  const badge   = document.getElementById('statusBadge');
+  const icon    = document.getElementById('statusIcon');
+
+  if (mode === 'active') {
+    dot.className     = 'dot';
+    text.textContent  = 'Object Detected – Collection Activated';
+    heading.textContent = '♻️ Collecting Plastic Item…';
+    desc.textContent  = 'Servo flap is open. Item is being deposited into the bin.';
+    badge.textContent = 'COLLECTING';
+    badge.className   = 'badge active';
+    icon.textContent  = '🟢';
+  } else {
+    dot.className     = 'dot idle';
+    text.textContent  = 'System Online – Monitoring active';
+    heading.textContent = 'Idle – Waiting for plastic item';
+    desc.textContent  = 'Place a plastic bottle near the sensor opening to trigger collection.';
+    badge.textContent = 'IDLE';
+    badge.className   = 'badge idle';
+    icon.textContent  = '🟡';
+  }
+}
+
+// ── Render Log Table ───────────────────────────────────
+function renderLog() {
+  const tbody = document.getElementById('logBody');
+  if (logEntries.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#484f58;padding:28px;">
+      No collections yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = logEntries.map(e => `
+    <tr>
+      <td>#${e.id}</td>
+      <td>${e.time}</td>
+      <td>${e.distance} cm</td>
+      <td><span class="tag ${MATERIAL_TAGS[e.material]}">${e.material}</span></td>
+      <td>${e.weight} g</td>
+      <td style="color:#3fb950;">✅ Collected</td>
+    </tr>
+  `).join('');
+}
+
+// ── Reset ──────────────────────────────────────────────
+function resetData() {
+  if (!confirm('Reset all collection data?')) return;
+  totalCount = 0; logEntries = []; collectionActive = false;
+  clearTimeout(collectionTimer);
+  document.getElementById('totalCount').textContent    = '0';
+  document.getElementById('totalWeight').textContent   = '0';
+  document.getElementById('recyclableWeight').textContent = '0';
+  document.getElementById('lastTime').textContent      = '—';
+  document.getElementById('lastDate').textContent      = 'No collection yet';
+  document.getElementById('binPct').textContent        = '0%';
+  document.getElementById('progressFill').style.width  = '0%';
+  renderLog();
+  setStatus('idle');
+  showToast('🔄 Data reset.');
+}
+
+// ── Export CSV ─────────────────────────────────────────
+function exportLog() {
+  if (logEntries.length === 0) { showToast('⚠️ No data to export.'); return; }
+  const header = '#,Time,Distance (cm),Material,Weight (g),Status\n';
+  const rows   = logEntries.map(e =>
+    `${e.id},${e.time},${e.distance},${e.material},${e.weight},Collected`
+  ).join('\n');
+  const blob = new Blob([header + rows], { type:'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'cleancycle_log.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('⬇ CSV exported!');
+}
+
+// ── Toast ──────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+</script>
+</body>
+</html>

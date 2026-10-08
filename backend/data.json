@@ -1,0 +1,16 @@
+{
+  "entries": [
+    {
+      "id": 1,
+      "timestamp": "2026-10-08T17:43:51.896Z",
+      "material": "PET",
+      "weightGrams": 25,
+      "location": "Bin A - Entrance",
+      "notes": "Test entry",
+      "source": "manual"
+    }
+  ],
+  "totalCount": 1,
+  "totalWeightGrams": 25,
+  "createdAt": "2026-10-08T17:35:28.047Z"
+}
